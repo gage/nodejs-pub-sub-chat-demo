@@ -46,8 +46,8 @@ function handler(req, res) {
 		readFile("/listen.html", res);
 	}else if(uri == "/all"){
 		Message.find(function(err, message) {
-		if (err) return console.error(err);
-		res.end(JSON.stringify(message));
+			if (err) return console.error(err);
+			res.end(JSON.stringify(message));
 		});
 	}
 }
