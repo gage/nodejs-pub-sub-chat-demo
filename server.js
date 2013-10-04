@@ -1,22 +1,30 @@
 var app = require('http').createServer(handler),
 	io = require('socket.io').listen(app),
 	fs = require('fs'),
+	url = require('url'),
 	redis = require('redis');
 
 app.listen(80);
 
 function handler(req, res) {
-	// just return the index HTML
-	fs.readFile(__dirname + '/index.html',
-	function (err, data) {
-		if (err) {
-			res.writeHead(500);
-			return res.end('Error loading index.html');
-		}
+	function readFile(file, res){
+	  fs.readFile(__dirname + '/' + file,
+	  function (err, data) {
+	    if (err) {
+	      res.writeHead(500);
+	      return res.end('Error loading index.html' + __dirname);
+	    }
 
-		res.writeHead(200);
-		res.end(data);
-	});
+	    res.writeHead(200);
+	    res.end(data);
+	  });
+	}
+	var uri = url.parse(req.url).pathname;
+	if(uri == "/"){
+		readFile("index.html", res);
+	}else if("/sender"){
+		readFile("listen.html", res);
+	}
 }
 
 io.configure( function() {
@@ -52,8 +60,8 @@ SessionController.prototype.rejoin = function(socket, message) {
 	});
 	var current = this;
 	this.sub.on('subscribe', function(channel, count) {
-		var rejoin = JSON.stringify({action: 'control', user: current.user, msg: ' rejoined the channel' });
-		current.publish(rejoin);
+		/*var rejoin = JSON.stringify({action: 'control', user: current.user, msg: ' rejoined the channel' });
+		current.publish(rejoin);*/
 		var reply = JSON.stringify({action: 'message', user: message.user, msg: message.msg });
 		current.publish(reply);
 	});
@@ -105,8 +113,8 @@ io.sockets.on('connection', function (socket) { // the actual socket callback
 		socket.get('sessionController', function(err, sessionController) {
 			if (sessionController === null) return;
 			sessionController.unsubscribe();
-			var leaveMessage = JSON.stringify({action: 'control', user: sessionController.user, msg: ' left the channel' });
-			sessionController.publish(leaveMessage);
+			/*var leaveMessage = JSON.stringify({action: 'control', user: sessionController.user, msg: ' left the channel' });
+			sessionController.publish(leaveMessage);*/
 			sessionController.destroyRedis();
 		});
 	});

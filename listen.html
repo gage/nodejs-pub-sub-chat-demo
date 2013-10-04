@@ -1,0 +1,33 @@
+<script src='http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'></script>
+<script src='http://jquery-json.googlecode.com/files/jquery.json-2.2.min.js'></script>
+<script src='http://datejs.googlecode.com/svn/trunk/build/date.js'></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+$(document).ready(function(){
+	join("Client" + new Date().getTime());
+	function join(name) {
+		var host = window.location.host.split(':')[0];
+		var socket = io.connect('http://' + host);
+		
+		// send join message
+		socket.emit('join', $.toJSON({ user: name }));
+		
+		var container = $('div#msgs');
+		
+		// handler for callback
+		socket.on('chat', function (msg) {
+			var message = $.evalJSON(msg);
+			var action = message.action;
+			container.append(message.user + " | ");
+			container.append(JSON.stringify(message.msg) + "<br/>");
+		});
+
+	}
+});
+</script>
+</head>
+<body>
+    <div id="msgs">
+    </div>
+</body>
+</html>

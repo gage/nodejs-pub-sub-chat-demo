@@ -3,6 +3,7 @@
 <script src='http://datejs.googlecode.com/svn/trunk/build/date.js'></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
+var socket;
 $(document).ready(function(){
 
 	// show join box
@@ -23,10 +24,9 @@ $(document).ready(function(){
 		$('#channel').show();
 		$('input#message').focus();
 	});
-
 	function join(name) {
 		var host = window.location.host.split(':')[0];
-		var socket = io.connect('http://' + host);
+		socket = io.connect('http://' + host);
 		
 		// send join message
 		socket.emit('join', $.toJSON({ user: name }));
@@ -52,21 +52,15 @@ $(document).ready(function(){
 			messageView.find('.time').text((new Date()).toString("HH:mm:ss"));
 			
 			switch (action) {
-				case 'message': var matches;
-								// someone starts chat with /me ... 
-								if (matches = message.msg.match(/^\s*[\/\\]me\s(.*)/)) {
-									messageView.find('.user').text(message.user + ' ' + matches[1]);
-									messageView.find('.user').css('font-weight', 'bold');
-								// normal chat message								
-								} else {
-									messageView.find('.user').text(message.user);
-									messageView.find('.message').text(': ' + message.msg);									
-								}
-								break;
+				case 'message': 
+				// someone starts chat with /me ... 
+					messageView.find('.user').text(message.user);
+					messageView.find('.message').text(': ' + JSON.stringify(message.msg));	
+					break;
 				case 'control': messageView.find('.user').text(message.user);
-								messageView.find('.message').text(message.msg);
-								messageView.addClass('control');
-								break;
+					messageView.find('.message').text(message.msg);
+					messageView.addClass('control');
+					break;
 			}
 			
 			// color own user:
