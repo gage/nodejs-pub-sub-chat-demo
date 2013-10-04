@@ -2,9 +2,29 @@ var app = require('http').createServer(handler),
 	io = require('socket.io').listen(app),
 	fs = require('fs'),
 	url = require('url'),
+	mongoose = require('mongoose'),
 	redis = require('redis');
 
+var messageSchema = new mongoose.Schema({
+  user: { type: String }
+, msg: {type: String}
+});
+
+// Compile a 'Movie' model using the movieSchema as the structure.
+// Mongoose also creates a MongoDB collection called 'Movies' for these documents.
+var Message = mongoose.model('Message', messageSchema);
+
 app.listen(80);
+
+var db = mongoose.connection;
+db.on('error', console.error);
+db.once('open', function() {
+
+});
+mongoose.connect('mongodb://' + process.env.MONGOIP + ':' + process.env.MONGOPORT + '/test');
+
+//var serverMDB = new mongodb.Server(process.env.MONGOIP, process.env.MONGOPORT);
+//var clientMDB = new mongodb.Db('test', serverMDB);
 
 function handler(req, res) {
 	function readFile(file, res){
@@ -22,8 +42,13 @@ function handler(req, res) {
 	var uri = url.parse(req.url).pathname;
 	if(uri == "/"){
 		readFile("index.html", res);
-	}else if("/sender"){
-		readFile("listen.html", res);
+	}else if(uri == "/listen"){
+		readFile("/listen.html", res);
+	}else if(uri == "/all"){
+		Message.find(function(err, message) {
+		if (err) return console.error(err);
+		res.end(JSON.stringify(message));
+		});
 	}
 }
 
@@ -92,8 +117,17 @@ io.sockets.on('connection', function (socket) { // the actual socket callback
 				socket.set('sessionController', newSessionController);
 				newSessionController.rejoin(socket, msg);
 			} else {
-				var reply = JSON.stringify({action: 'message', user: msg.user, msg: msg.msg });
+				var messageData = {action: 'message', user: msg.user, msg: msg.msg};
+				var reply = JSON.stringify(messageData);
 				sessionController.publish(reply);
+				var iMesg = new Message(messageData);
+				iMesg.save(function(err, iMesg) {
+				  if (err) return console.error(err);
+				  console.dir(iMesg);
+				});
+				/*clientMDB.collection('messages', function(err, collection) {
+					collection.save(messageData);
+				});*/
 			}
 		});
 		// just some logging to trace the chat data
